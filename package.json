@@ -1,0 +1,19 @@
+{
+  "name": "explainer-studio",
+  "version": "1.0.0",
+  "description": "Generate the prompt that turns any material into an explainer website, ready to hand to a coding agent.",
+  "license": "MIT",
+  "keywords": ["prompt", "ai-agents", "explainer", "education", "static-site", "generator"],
+  "bin": {
+    "explainer-studio": "bin/explainer-studio.js"
+  },
+  "files": ["index.html", "src", "bin", "LICENSE", "README.md"],
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "test": "node --test",
+    "prompt": "node bin/explainer-studio.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
