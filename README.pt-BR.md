@@ -35,6 +35,8 @@ npm start        # http://localhost:4173
 
 Para publicar a sua cópia, sirva a raiz do repositório em qualquer host estático (GitHub Pages, Netlify, Cloudflare Pages…). Não há nada para compilar.
 
+No GitHub Pages, abra **Settings → Pages** e selecione **GitHub Actions** em **Source**. O workflow CI testa Node 18, 20, 22 e 24 e publica `index.html` e `src/` quando você envia alterações para `main`. Também é possível publicar em **Actions → CI → Run workflow**, selecionando `main`. Outras branches e pull requests executam os testes. Configure um domínio personalizado nas configurações do Pages e aponte seu DNS para o GitHub Pages.
+
 ## Linha de comando
 
 O mesmo gerador roda no Node 18+, então scripts e agentes podem gerar prompts sem navegador.

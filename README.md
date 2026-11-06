@@ -35,6 +35,8 @@ npm start        # http://localhost:4173
 
 To publish your own copy, serve the repository root from any static host (GitHub Pages, Netlify, Cloudflare Pages…). There is nothing to build.
 
+For GitHub Pages, open **Settings → Pages** and set **Source** to **GitHub Actions**. The CI workflow tests Node 18, 20, 22 and 24, then publishes `index.html` and `src/` when you push to `main`. You can also publish from **Actions → CI → Run workflow** on `main`. Other branches and pull requests run the tests. Configure a custom domain in Pages settings and point its DNS to GitHub Pages.
+
 ## Command line
 
 The same builder runs in Node 18+, so scripts and agents can generate prompts without a browser.

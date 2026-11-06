@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- GitHub Pages deployment now uses current Node 24 actions and Ubuntu 24.04 runners, avoiding the Node 20 deprecation warning and Ubuntu runner migration notices after selecting GitHub Actions as the Pages source.
 - Single-language sites no longer get a language-switching test.
 - Reading the material at build time only mentions the full text when the Full text block is chosen.
 
