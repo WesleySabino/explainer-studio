@@ -23,6 +23,12 @@ Implemented in [the browser application](../src/app.js), [the interface](../inde
 - [x] Generate a structured Markdown prompt from form answers.
 - [x] Offer four detail levels: Essential, Balanced, Detailed, and Complete.
 - [x] Offer four starting presets: Recommended, Interactive course, Light read, and Showpiece.
+- [x] Save personal starting points from the current answers, choosing any of four groups: branding, languages, accessibility, and development (technology, publishing, analytics, testing, and way-of-working preferences).
+- [x] List personal starting points beside the built-in presets; choosing one applies all its saved groups.
+- [x] Apply only selected groups of a personal starting point from the My starting points dialog.
+- [x] Keep project-specific answers (material, site name, audience, goal, structure, teaching, chapters, repository, domain, analytics ID, and free-form requests) when applying a personal starting point.
+- [x] Remember whether the optional sections owned by a group were switched off.
+- [x] Overwrite a personal starting point by saving under the same name, delete one with undo, and export or import one as a JSON file.
 - [x] Update the prompt preview whenever answers change.
 - [x] Highlight newly changed preview lines and scroll relevant changes into view.
 - [x] Display an approximate token count.
@@ -216,6 +222,7 @@ Implemented in [the CLI](../bin/explainer-studio.js).
 - [x] Include rule explanations with `--why`.
 - [x] Exclude optional sections with `--off`.
 - [x] Override individual answers using repeatable `--set id=value` arguments, including lists and booleans.
+- [x] Apply an exported personal starting point with `--personal`, optionally limited to some groups with `--groups`.
 - [x] Print the prompt to standard output or save it with `--out`.
 - [x] List field IDs, types, levels, defaults, and options with `--fields`.
 - [x] Show command usage with `--help` or `-h`.
@@ -252,7 +259,7 @@ The following ten features extend the existing application. Effort estimates are
 
 - [ ] **5. Website blueprint preview — Medium to large effort.** Show a schematic of the proposed website's opening, navigation, chapters, activities, and references. Update it as structural choices change and incorporate chapter-planner details when available. Keep it clearly identified as a planning preview.
 
-- [ ] **6. Reusable personal presets — Small to medium effort.** Save preferred branding, languages, accessibility requirements, and development choices. Apply selected groups of settings while preserving project-specific answers. Extend the four built-in presets with user-created presets.
+- [x] **6. Reusable personal presets — Small to medium effort.** Save preferred branding, languages, accessibility requirements, and development choices. Apply selected groups of settings while preserving project-specific answers. Extend the four built-in presets with user-created presets.
 
 - [ ] **7. Source organizer — Medium effort.** Maintain multiple source records with titles, authors, locations, relevant pages or sections, and chapter assignments. Export a source manifest alongside the prompt. Extend the existing source-type and location fields with structured records for individual sources.
 

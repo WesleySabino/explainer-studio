@@ -18,6 +18,7 @@ The prompt carries what usually goes wrong when an agent builds this kind of sit
 - **Rationale on demand.** One switch appends the reason behind each rule.
 - **Agent credit.** Choose whether the agent is credited as a co-author (`Co-Authored-By` trailers, PR note, README credits) or stays invisible in commits, pull requests, code and the site.
 - **Starting points.** Recommended, Interactive course, Light read and Showpiece.
+- **Your own starting points.** Save your branding, languages, accessibility requirements and development choices once, then lay any of those groups over a new project without touching its material, name, audience or structure.
 - **Sections you can leave out**, questions that only show up when they apply, and undo for every destructive action.
 - **Answers as a file.** Export your answers as JSON, import them later, or feed them to the CLI.
 - **Private by design.** Runs entirely in your browser. Answers stay in `localStorage`; nothing is sent anywhere.
@@ -49,6 +50,7 @@ The same builder runs in Node 18+, so scripts and agents can generate prompts wi
 node bin/explainer-studio.js --preset course --level 3 --lang pt
 node bin/explainer-studio.js explainer-answers.json --why --out prompt.md
 node bin/explainer-studio.js --set name="Photosynthesis 101" --set langs=en,pt --set attribution=invisible
+node bin/explainer-studio.js answers.json --personal my-defaults.json --groups branding,accessibility
 node bin/explainer-studio.js --fields          # every field id, type, level and option
 node bin/explainer-studio.js --help
 ```
@@ -70,6 +72,24 @@ After `npm link` (or a global install) the command is just `explainer-studio`.
     "name": "Photosynthesis 101",
     "langs": ["en", "pt"],
     "attribution": "invisible"
+  }
+}
+```
+
+### Starting point file
+
+"My starting points" in the ⋯ menu saves the current answers of the groups you pick (`branding`, `languages`, `accessibility`, `development`) in the browser, under its own name. Pick one from the starting point list to apply all its groups, or open the dialog to apply only some. Fields outside the groups, such as the material, site name, audience, structure, repository and domain, are never saved or overwritten. Groups that own optional sections (Languages, Accessibility, Technology, Publishing, Analytics, Testing) also remember whether those sections were switched off.
+
+Export writes the file below; the CLI applies it with `--personal`, optionally limited with `--groups`.
+
+```json
+{
+  "kind": "explainer-studio/personal-preset",
+  "version": 1,
+  "name": "My defaults",
+  "groups": {
+    "branding": { "values": { "palette": "#0f172a, #f97316", "fonts": "Fraunces + Inter" } },
+    "accessibility": { "values": { "a11y": ["nojs", "reduce", "keyboard", "alt", "contrast"] }, "off": [] }
   }
 }
 ```

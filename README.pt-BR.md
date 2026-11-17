@@ -18,6 +18,7 @@ O prompt já traz o que costuma dar errado quando um agente constrói esse tipo 
 - **Porquês sob demanda.** Uma chave acrescenta o motivo de cada regra.
 - **Crédito do agente.** Escolha se o agente aparece como coautor (trailers `Co-Authored-By`, aviso no PR, créditos no README) ou fica invisível em commits, pull requests, código e no site.
 - **Pontos de partida.** Recomendado, Curso interativo, Leitura leve e Vitrine.
+- **Seus próprios pontos de partida.** Salve uma vez sua identidade visual, idiomas, requisitos de acessibilidade e escolhas de desenvolvimento e aplique qualquer um desses grupos a um projeto novo, sem mexer no material, nome, público ou estrutura.
 - **Seções que podem ficar de fora**, perguntas que só aparecem quando fazem sentido e "desfazer" em toda ação destrutiva.
 - **Respostas em arquivo.** Exporte as respostas em JSON, importe depois ou use na linha de comando.
 - **Privado por padrão.** Roda inteiro no navegador. As respostas ficam no `localStorage`; nada é enviado.
@@ -49,6 +50,7 @@ O mesmo gerador roda no Node 18+, então scripts e agentes podem gerar prompts s
 node bin/explainer-studio.js --preset course --level 3 --lang pt
 node bin/explainer-studio.js explainer-answers.json --why --out prompt.md
 node bin/explainer-studio.js --set name="Fotossíntese 101" --set langs=pt,en --set attribution=invisible
+node bin/explainer-studio.js respostas.json --personal meus-padroes.json --groups branding,accessibility
 node bin/explainer-studio.js --fields          # todos os campos, tipos, níveis e opções
 node bin/explainer-studio.js --help
 ```
@@ -70,6 +72,24 @@ Depois de `npm link` (ou de instalar globalmente), o comando é só `explainer-s
     "name": "Fotossíntese 101",
     "langs": ["pt", "en"],
     "attribution": "invisible"
+  }
+}
+```
+
+### Arquivo de ponto de partida
+
+"Meus pontos de partida", no menu ⋯, salva no navegador, com um nome, as respostas atuais dos grupos escolhidos (`branding`, `languages`, `accessibility`, `development`). Escolha um na lista de pontos de partida para aplicar todos os grupos, ou abra a janela para aplicar só alguns. Campos fora dos grupos, como material, nome do site, público, estrutura, repositório e domínio, nunca são salvos nem sobrescritos. Grupos donos de seções opcionais (Idiomas, Acessibilidade, Tecnologia, Publicação, Analytics, Testes) também guardam se essas seções estavam desligadas.
+
+Exportar gera o arquivo abaixo; a CLI o aplica com `--personal`, opcionalmente limitado por `--groups`.
+
+```json
+{
+  "kind": "explainer-studio/personal-preset",
+  "version": 1,
+  "name": "Meus padrões",
+  "groups": {
+    "branding": { "values": { "palette": "#0f172a, #f97316", "fonts": "Fraunces + Inter" } },
+    "accessibility": { "values": { "a11y": ["nojs", "reduce", "keyboard", "alt", "contrast"] }, "off": [] }
   }
 }
 ```

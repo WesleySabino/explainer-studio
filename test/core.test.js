@@ -212,3 +212,75 @@ test("full text is only requested when the block is chosen", function () {
   assert.doesNotMatch(C.build({ level: 3 }), /the full text/);
   assert.match(C.build({ level: 3, values: { blocks: ["hero", "fulltext"] } }), /generate the full text/);
 });
+
+/* ------------------------------------------------------ personal presets */
+
+test("personal groups reference real fields, at most once, and optional sections", function () {
+  var seen = {};
+  S.personalGroups.forEach(function (g) {
+    LANGS.forEach(function (l) { assert.ok(g.title[l], "group " + g.id + " title " + l); });
+    g.fields.forEach(function (id) {
+      assert.ok(C.fields[id], "group " + g.id + " lists unknown field " + id);
+      assert.ok(!seen[id], id + " is in two groups");
+      seen[id] = true;
+    });
+    g.sections.forEach(function (id) { assert.ok(C.sections[id] && C.sections[id].optional, g.id + " section " + id); });
+  });
+  ["source_type", "source_path", "name", "audience", "goal", "blocks", "chapters", "repo", "domain", "an_id", "extra"].forEach(function (id) {
+    assert.ok(!seen[id], id + " is project-specific and must stay out of personal groups");
+  });
+});
+
+test("personal presets keep project answers and only apply chosen groups", function () {
+  var mineSt = C.normalize({ values: { palette: "#111111", fonts: "Fraunces", langs: ["pt", "en"], a11y: ["keyboard"], stack: "astro", attribution: "invisible" }, off: ["analytics"] });
+  var p = C.capturePersonal(mineSt, "  Mine  ");
+  assert.equal(p.name, "Mine");
+  assert.deepEqual(Object.keys(p.groups), ["branding", "languages", "accessibility", "development"]);
+  assert.deepEqual(p.groups.development.off, ["analytics"]);
+
+  var project = { preset: "course", values: { name: "Photosynthesis", audience: "Teens", palette: "#ffffff", langs: ["es"] } };
+  var all = C.applyPersonal(project, p);
+  assert.equal(all.values.name, "Photosynthesis");
+  assert.equal(all.values.audience, "Teens");
+  assert.equal(all.values.layout, "multi", "built-in preset values outside the groups survive");
+  assert.equal(all.values.palette, "#111111");
+  assert.deepEqual(all.values.langs, ["pt", "en"]);
+  assert.equal(all.values.attribution, "invisible");
+  assert.ok(all.off.analytics);
+  assert.equal(all.preset, "");
+
+  var some = C.applyPersonal(project, p, ["branding"]);
+  assert.equal(some.values.palette, "#111111");
+  assert.deepEqual(some.values.langs, ["es"]);
+  assert.equal(some.values.attribution, "coauthor");
+  assert.ok(!some.off.analytics);
+
+  var same = C.applyPersonal({ preset: "light" }, C.capturePersonal({ preset: "light" }, "Light copy", ["accessibility"]));
+  assert.equal(same.preset, "light", "a no-op keeps the built-in preset selected");
+});
+
+test("normalizePersonal rejects junk and strips foreign fields", function () {
+  assert.equal(C.normalizePersonal(null), null);
+  assert.equal(C.normalizePersonal({ name: "", groups: { branding: { values: {} } } }), null);
+  assert.equal(C.normalizePersonal({ name: "X", groups: { nope: {} } }), null);
+  var p = C.normalizePersonal({ name: "X", groups: { branding: { values: { palette: "#1", name: "Leak", style: "fly" } }, accessibility: { values: { a11y: ["keyboard", "zz"] }, off: ["a11y", "qa"] } } });
+  assert.deepEqual(Object.keys(p.groups.branding.values).sort(), ["palette", "style"]);
+  assert.equal(p.groups.branding.values.style, "cinematic");
+  assert.deepEqual(p.groups.accessibility.values.a11y, ["keyboard"]);
+  assert.deepEqual(p.groups.accessibility.off, ["a11y"]);
+});
+
+test("CLI --personal applies a starting point file", function () {
+  var fs = require("fs"), os = require("os");
+  var file = path.join(os.tmpdir(), "explainer-personal-" + process.pid + ".json");
+  fs.writeFileSync(file, JSON.stringify(C.capturePersonal({ values: { palette: "#abcdef", attribution: "invisible" } }, "Mine")));
+  try {
+    var input = { level: 3, values: { name: "Keep me" } };
+    assert.equal(cli(["--level", "3", "--set", "name=Keep me", "--personal", file]), C.build(C.applyPersonal(input, C.normalizePersonal(JSON.parse(fs.readFileSync(file, "utf8"))))));
+    var brandOnly = cli(["--level", "3", "--personal", file, "--groups", "branding"]);
+    assert.match(brandOnly, /#abcdef/);
+    assert.doesNotMatch(brandOnly, /user\.name/);
+    assert.throws(function () { execFileSync(process.execPath, [CLI, "--personal", file, "--groups", "nope"], { stdio: "pipe" }); });
+    assert.throws(function () { execFileSync(process.execPath, [CLI, "--groups", "branding"], { stdio: "pipe" }); });
+  } finally { fs.unlinkSync(file); }
+});

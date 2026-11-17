@@ -81,6 +81,78 @@
     return st;
   }
 
+  /* ----------------------------------------------------- personal presets
+     A personal preset saves a few groups of answers (branding, languages…) so they can be
+     laid over any project without touching its project-specific answers. File format:
+       { kind: "explainer-studio/personal-preset", version, name, groups: { groupId: { values: { fieldId: value }, off: [sectionId] } } } */
+
+  var PERSONAL_KIND = "explainer-studio/personal-preset";
+  var GROUP = {};
+  (S.personalGroups || []).forEach(function (g) { GROUP[g.id] = g; });
+
+  function pickGroups(ids, available) {
+    var all = Object.keys(GROUP).filter(function (id) { return !available || available[id]; });
+    if (!Array.isArray(ids)) return all;
+    return all.filter(function (id) { return ids.indexOf(id) > -1; });
+  }
+
+  /* Returns a valid personal preset or null when there is nothing usable in `raw`. */
+  function normalizePersonal(raw) {
+    if (!raw || typeof raw !== "object" || !raw.groups || typeof raw.groups !== "object") return null;
+    var name = typeof raw.name === "string" ? raw.name.trim().slice(0, 80) : "";
+    if (!name) return null;
+    var out = { kind: PERSONAL_KIND, version: S.version, name: name, groups: {} };
+    Object.keys(GROUP).forEach(function (gid) {
+      var g = GROUP[gid], src = raw.groups[gid];
+      if (!src || typeof src !== "object") return;
+      var given = src.values && typeof src.values === "object" ? src.values : {};
+      var values = {};
+      g.fields.forEach(function (id) { if (id in given) values[id] = coerce(FIELD[id], given[id]); });
+      var entry = { values: values };
+      if (g.sections.length) {
+        var off = Array.isArray(src.off) ? src.off : [];
+        entry.off = g.sections.filter(function (id) { return off.indexOf(id) > -1; });
+      }
+      out.groups[gid] = entry;
+    });
+    return Object.keys(out.groups).length ? out : null;
+  }
+
+  /* Saves the chosen groups (all of them by default) from a state. */
+  function capturePersonal(state, name, groupIds) {
+    var st = normalize(state), groups = {};
+    pickGroups(groupIds).forEach(function (gid) {
+      var g = GROUP[gid], values = {};
+      g.fields.forEach(function (id) { values[id] = clone(st.values[id]); });
+      groups[gid] = { values: values };
+      if (g.sections.length) groups[gid].off = g.sections.filter(function (id) { return !!st.off[id]; });
+    });
+    return normalizePersonal({ name: name, groups: groups });
+  }
+
+  /* Lays the chosen groups of a personal preset over a state and returns the new state.
+     Everything outside those groups is kept as it was. */
+  function applyPersonal(state, preset, groupIds) {
+    var st = normalize(state), p = normalizePersonal(preset);
+    if (!p) return st;
+    var changed = false;
+    function key(x) { return JSON.stringify(Array.isArray(x) ? x.slice().sort() : x); }
+    pickGroups(groupIds, p.groups).forEach(function (gid) {
+      var entry = p.groups[gid];
+      Object.keys(entry.values).forEach(function (id) {
+        if (key(st.values[id]) !== key(entry.values[id])) changed = true;
+        st.values[id] = clone(entry.values[id]);
+      });
+      (entry.off ? GROUP[gid].sections : []).forEach(function (id) {
+        var off = entry.off.indexOf(id) > -1;
+        if (off !== !!st.off[id]) changed = true;
+        if (off) st.off[id] = true; else delete st.off[id];
+      });
+    });
+    if (changed) st.preset = "";
+    return st;
+  }
+
   /* ----------------------------------------------------------- visibility */
 
   function sectionOn(st, sec) {
@@ -565,6 +637,7 @@
   return {
     schema: S, fields: FIELD, sections: SECTION, sectionOf: SECTION_OF,
     defaults: defaults, presetValues: presetValues, fresh: fresh, normalize: normalize,
+    personalGroups: GROUP, normalizePersonal: normalizePersonal, capturePersonal: capturePersonal, applyPersonal: applyPersonal,
     sectionOn: sectionOn, sectionShown: sectionShown, fieldVisible: fieldVisible, applies: applies,
     build: build, stats: stats
   };

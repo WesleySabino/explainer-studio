@@ -505,5 +505,24 @@
     } }
   };
 
-  return { version: 1, uiLanguages: ["pt", "en"], levels: levels, sections: sections, presets: presets };
+  /* Groups a personal preset can carry. Each lists the fields it saves and the optional
+     sections whose on/off switch it saves. Fields outside every group are project-specific
+     (material, name, audience, structure, domain…) and a personal preset never touches them. */
+  var personalGroups = [
+    { id: "branding", title: T("Identidade visual", "Branding"),
+      fields: ["author", "author_links", "brand", "style", "palette", "fonts", "inspo"], sections: [] },
+    { id: "languages", title: T("Idiomas", "Languages"),
+      fields: ["langs", "fallback", "translate_first", "autodetect", "switch_keep", "slugs", "one_template", "localise_all", "glossary_terms", "reply_lang"],
+      sections: ["i18n"] },
+    { id: "accessibility", title: T("Acessibilidade", "Accessibility"), fields: ["a11y"], sections: ["a11y"] },
+    { id: "development", title: T("Desenvolvimento", "Development"),
+      fields: ["libs", "stack", "seo", "readme", "vendor", "portable", "build_source", "components", "weight",
+        "deploy_now", "host", "visibility", "dns", "skeleton", "safe_order", "verify_domain", "accounts",
+        "an_tool", "an_questions", "an_tz", "an_consent", "an_prod_only", "an_dashboard", "an_verify",
+        "qa_checks", "qa_auto", "qa_in_repo", "qa_phone",
+        "ask", "attribution", "first_delivery", "commits", "pitfalls", "plan_md", "review_list", "debt", "report"],
+      sections: ["tech", "deploy", "analytics", "qa"] }
+  ];
+
+  return { version: 1, uiLanguages: ["pt", "en"], levels: levels, sections: sections, presets: presets, personalGroups: personalGroups };
 });

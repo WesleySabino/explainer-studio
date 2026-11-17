@@ -17,6 +17,8 @@ var HELP = [
   "  --lang <pt|en>      Prompt language (default en)",
   "  --why               Include the rationale behind each rule",
   "  --off <ids>         Comma-separated optional sections to leave out",
+  "  --personal <file>   Lay a saved starting point (exported from My starting points) over the answers",
+  "  --groups <ids>      Comma-separated groups of --personal to apply: " + Object.keys(C.personalGroups).join(", "),
   "  --set <id=value>    Set a field; repeatable. Lists use commas, switches true/false",
   "  --out <file>        Write to a file instead of stdout",
   "  --fields            Print every field id, type, level and option, then exit",
@@ -25,6 +27,7 @@ var HELP = [
   "Examples:",
   "  explainer-studio --preset course --level 3 --lang pt",
   "  explainer-studio answers.json --why --out prompt.md",
+  "  explainer-studio answers.json --personal my-brand.json --groups branding,accessibility",
   "  explainer-studio --set name=\"Photosynthesis 101\" --set langs=en,pt --set attribution=invisible"
 ].join("\n");
 
@@ -43,6 +46,8 @@ function parse(argv) {
     else if (a === "--lang") o.lang = next();
     else if (a === "--off") o.off = next().split(",").filter(Boolean);
     else if (a === "--set") o.sets.push(next());
+    else if (a === "--personal") o.personal = next();
+    else if (a === "--groups") o.groups = next().split(",").filter(Boolean);
     else if (a === "--out") o.out = next();
     else if (a.charAt(0) === "-") fail("unknown option " + a + " (see --help)");
     else if (!o.file) o.file = a;
@@ -105,6 +110,18 @@ if (o.why) input.why = true;
 if (o.off) {
   o.off.forEach(function (id) { if (!C.sections[id] || !C.sections[id].optional) fail(id + " is not an optional section"); });
   input.off = o.off;
+}
+if (o.groups && !o.personal) fail("--groups needs --personal");
+if (o.personal) {
+  var personal;
+  try { personal = C.normalizePersonal(JSON.parse(fs.readFileSync(path.resolve(o.personal), "utf8"))); }
+  catch (e) { fail("cannot read " + o.personal + ": " + e.message); }
+  if (!personal) fail(o.personal + " is not a starting point file");
+  (o.groups || []).forEach(function (g) {
+    if (!C.personalGroups[g]) fail("unknown group " + g + " (" + Object.keys(C.personalGroups).join(", ") + ")");
+    if (!personal.groups[g]) fail(o.personal + " has no " + g + " group");
+  });
+  input = C.applyPersonal(input, personal, o.groups);
 }
 if (o.sets.length) {
   input.values = Object.assign({}, input.values || {});

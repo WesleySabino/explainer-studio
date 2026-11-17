@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var C = window.EXPLAINER, S = C.schema, UI = window.EXPLAINER_UI;
-  var KEY = "explainer-studio:v1", UI_KEY = "explainer-studio:ui";
+  var KEY = "explainer-studio:v1", UI_KEY = "explainer-studio:ui", MINE_KEY = "explainer-studio:presets";
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
@@ -19,6 +19,17 @@
   var st = null;
   try { var saved = JSON.parse(read(KEY)); if (saved) st = C.normalize(saved); } catch (e) { st = null; }
   if (!st) st = C.fresh(ui);
+
+  /* Personal presets ("My starting points"): [{ id, kind, version, name, groups }] */
+  var mine = [], activeMine = "";
+  try {
+    (JSON.parse(read(MINE_KEY)) || []).forEach(function (raw) {
+      var p = C.normalizePersonal(raw);
+      if (p && raw && typeof raw.id === "string") { p.id = raw.id; mine.push(p); }
+    });
+  } catch (e) { mine = []; }
+  function saveMine() { write(MINE_KEY, JSON.stringify(mine)); }
+  function findMine(id) { return mine.filter(function (p) { return p.id === id; })[0]; }
 
   function t(k) { return UI[ui][k]; }
   function snapshot() {
@@ -44,7 +55,7 @@
     $$("[data-i18n]").forEach(function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
     var labels = {
       levels: t("level"), preset: t("preset"), uiLang: t("uiLang"), promptLang: t("promptLang"), menuBtn: t("more"),
-      stepsNav: t("sections"), preview: t("prompt"), code: t("prompt"), closeSheet: t("close")
+      stepsNav: t("sections"), preview: t("prompt"), code: t("prompt"), closeSheet: t("close"), personalClose: t("close")
     };
     Object.keys(labels).forEach(function (id) { $("#" + id).setAttribute("aria-label", labels[id]); });
     $("#preset").title = t("preset");
@@ -62,10 +73,15 @@
   }
 
   function renderPresets() {
-    var html = Object.keys(S.presets).map(function (k) {
-      return '<option value="' + k + '"' + (st.preset === k ? " selected" : "") + ">" + esc(S.presets[k].name[ui]) + "</option>";
-    }).join("");
-    if (!st.preset) html += '<option value="" selected disabled>' + esc(t("custom")) + "</option>";
+    if (activeMine && !findMine(activeMine)) activeMine = "";
+    var sel = activeMine ? "my:" + activeMine : st.preset;
+    function opt(v, l) { return '<option value="' + esc(v) + '"' + (sel === v ? " selected" : "") + ">" + esc(l) + "</option>"; }
+    var html = Object.keys(S.presets).map(function (k) { return opt(k, S.presets[k].name[ui]); }).join("");
+    if (mine.length) {
+      html = '<optgroup label="' + esc(t("builtIn")) + '">' + html + "</optgroup>" +
+        '<optgroup label="' + esc(t("personal")) + '">' + mine.map(function (p) { return opt("my:" + p.id, p.name); }).join("") + "</optgroup>";
+    }
+    if (!sel) html += '<option value="" selected disabled>' + esc(t("custom")) + "</option>";
     $("#preset").innerHTML = html;
   }
 
@@ -173,7 +189,7 @@
       if (el.checked) delete st.off[id]; else st.off[id] = true;
     } else if (el.name && C.fields[el.name]) {
       readField(el.name);
-      if (st.preset) { st.preset = ""; renderPresets(); }
+      if (st.preset || activeMine) { st.preset = ""; activeMine = ""; renderPresets(); }
     } else return;
     applyVisibility(true);
     schedule(); save();
@@ -246,7 +262,7 @@
   }
 
   function renderAll() {
-    renderChrome(); renderLevels(); renderPresets(); renderForm();
+    renderChrome(); renderLevels(); renderPresets(); renderForm(); renderMine();
     prevLines = null; update(); save();
   }
 
@@ -267,11 +283,120 @@
   $("#why").addEventListener("change", function (e) { st.why = e.target.checked; update(); save(); });
 
   $("#preset").addEventListener("change", function (e) {
-    var k = e.target.value; if (!S.presets[k]) return;
+    var k = e.target.value;
+    if (k.indexOf("my:") === 0) { var p = findMine(k.slice(3)); if (p) applyMine(p); return; }
+    if (!S.presets[k]) return;
     var prev = JSON.stringify(snapshot());
-    st.values = C.presetValues(k); st.preset = k; st.off = {};
+    st.values = C.presetValues(k); st.preset = k; st.off = {}; activeMine = "";
     renderPresets(); renderForm(); update(); save();
     toast(t("presetDone"), prev);
+  });
+
+  /* Personal presets: lay saved groups over the current answers, keeping the rest. */
+  function applyMine(p, groups) {
+    var prev = JSON.stringify(snapshot());
+    st = C.applyPersonal(st, p, groups);
+    activeMine = p.id;
+    renderPresets(); renderForm(); update(); save();
+    toast(t("personalApplied"), prev);
+  }
+
+  var dlg = $("#personal");
+  function chips(name, ids, checked) {
+    return ids.map(function (gid) {
+      return '<label class="pill chip"><input type="checkbox" name="' + esc(name) + '" value="' + gid + '"' + (checked ? " checked" : "") + "><span>" +
+        esc(C.personalGroups[gid].title[ui]) + "</span></label>";
+    }).join("");
+  }
+  function checkedGroups(box) { return $$("input:checked", box).map(function (i) { return i.value; }); }
+  function syncButtons() {
+    $("#pSave").disabled = !$("#pName").value.trim() || !checkedGroups($("#pGroups")).length;
+    $$("#pList li").forEach(function (li) { $('[data-p="apply"]', li).disabled = !checkedGroups(li).length; });
+  }
+  function renderMine() {
+    var keep = $("#pGroups").children.length ? checkedGroups($("#pGroups")) : Object.keys(C.personalGroups);
+    $("#pGroups").innerHTML = chips("pg-new", Object.keys(C.personalGroups), false);
+    $$("#pGroups input").forEach(function (i) { i.checked = keep.indexOf(i.value) > -1; });
+    $("#pList").innerHTML = mine.map(function (p) {
+      var hid = "pn-" + esc(p.id);
+      return '<li data-id="' + esc(p.id) + '"><h3 id="' + hid + '">' + esc(p.name) + "</h3>" +
+        '<div class="pills" role="group" aria-labelledby="' + hid + '">' + chips("pg-" + p.id, Object.keys(p.groups), true) + "</div>" +
+        '<div class="dialog__actions">' +
+        '<button type="button" class="primary" data-p="apply" aria-describedby="' + hid + '">' + esc(t("apply")) + "</button>" +
+        '<button type="button" class="ghost" data-p="export" aria-describedby="' + hid + '">' + esc(t("exportPreset")) + "</button>" +
+        '<button type="button" class="ghost" data-p="remove" aria-describedby="' + hid + '">' + esc(t("remove")) + "</button>" +
+        "</div></li>";
+    }).join("");
+    $("#pList").hidden = !mine.length;
+    syncButtons();
+  }
+  function addMine(p) {
+    var same = mine.filter(function (m) { return m.name.toLowerCase() === p.name.toLowerCase(); })[0];
+    if (same) { p.id = same.id; mine[mine.indexOf(same)] = p; }
+    else { p.id = "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); mine.push(p); }
+    saveMine(); renderMine(); renderPresets();
+  }
+  function plain(p) { return { kind: p.kind, version: p.version, name: p.name, groups: p.groups }; }
+
+  dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener("close", function () { document.body.appendChild($("#toast")); });
+  $("#personalClose").addEventListener("click", function () { dlg.close(); });
+  dlg.addEventListener("input", syncButtons);
+  dlg.addEventListener("change", syncButtons);
+  $("#pName").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("#pSave").click(); } });
+  $("#pSave").addEventListener("click", function () {
+    if (this.disabled) return;
+    var p = C.capturePersonal(st, $("#pName").value, checkedGroups($("#pGroups")));
+    if (!p) return;
+    addMine(p);
+    $("#pName").value = ""; syncButtons();
+    toast(t("personalSaved"));
+  });
+  $("#pList").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-p]"); if (!b) return;
+    var li = b.closest("li"), p = findMine(li.getAttribute("data-id")); if (!p) return;
+    var act = b.getAttribute("data-p");
+    if (act === "apply") {
+      dlg.close();
+      applyMine(p, checkedGroups(li));
+    } else if (act === "export") {
+      download("starting-point" + (slug(p.name) ? "-" + slug(p.name) : "") + ".json", JSON.stringify(plain(p), null, 2) + "\n", "application/json");
+    } else if (act === "remove") {
+      var at = mine.indexOf(p);
+      mine.splice(at, 1);
+      saveMine(); renderMine(); renderPresets();
+      toast(t("personalRemoved"), function () {
+        mine.splice(Math.min(at, mine.length), 0, p);
+        saveMine(); renderMine(); renderPresets();
+      });
+    }
+  });
+  $("#pImport").addEventListener("click", function () { $("#pImportFile").click(); });
+  $("#pImportFile").addEventListener("change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var p;
+      try { p = C.normalizePersonal(JSON.parse(reader.result)); } catch (err) { p = null; }
+      if (!p) { toast(t("personalInvalid")); return; }
+      addMine(p);
+      toast(t("personalSaved"));
+    };
+    reader.readAsText(file);
+  });
+  /* Another tab changed the saved list. */
+  window.addEventListener("storage", function (e) {
+    if (e.key !== MINE_KEY) return;
+    mine = [];
+    try {
+      (JSON.parse(e.newValue) || []).forEach(function (raw) {
+        var p = C.normalizePersonal(raw);
+        if (p && raw && typeof raw.id === "string") { p.id = raw.id; mine.push(p); }
+      });
+    } catch (err) { mine = []; }
+    renderMine(); renderPresets();
   });
 
   /* Copy / download */
@@ -327,13 +452,17 @@
     var b = e.target.closest("[data-action]"); if (!b) return;
     var action = b.getAttribute("data-action");
     closeMenu();
-    if (action === "export") {
+    if (action === "personal") {
+      renderMine();
+      dlg.showModal();
+      $("#pName").focus();
+    } else if (action === "export") {
       download("explainer-answers.json", JSON.stringify(snapshot(), null, 2) + "\n", "application/json");
     } else if (action === "import") {
       $("#importFile").click();
     } else if (action === "reset") {
       var prev = JSON.stringify(snapshot());
-      st = C.fresh(ui);
+      st = C.fresh(ui); activeMine = "";
       renderAll();
       toast(t("resetDone"), prev);
     }
@@ -348,17 +477,19 @@
       try { raw = JSON.parse(reader.result); } catch (err) { raw = null; }
       if (!raw || typeof raw !== "object" || !raw.values) { toast(t("importFailed")); return; }
       var prev = JSON.stringify(snapshot());
-      st = C.normalize(raw);
+      st = C.normalize(raw); activeMine = "";
       renderAll();
       toast(t("imported"), prev);
     };
     reader.readAsText(file);
   });
 
-  /* Toast with optional undo */
+  /* Toast with optional undo: a saved state (JSON string) to restore, or a function to call */
   var toastTimer, undoState = null;
   function toast(msg, undo) {
     var el = $("#toast");
+    var host = dlg.open ? dlg : document.body; /* a modal dialog hides everything outside it */
+    if (el.parentNode !== host) host.appendChild(el);
     undoState = undo || null;
     el.innerHTML = "<span>" + esc(msg) + "</span>" + (undo ? '<button type="button">' + esc(t("undo")) + "</button>" : "");
     el.style.pointerEvents = undo ? "auto" : "none";
@@ -368,8 +499,9 @@
   }
   $("#toast").addEventListener("click", function (e) {
     if (!e.target.closest("button") || !undoState) return;
-    st = C.normalize(JSON.parse(undoState)); undoState = null;
-    renderAll();
+    var undo = undoState; undoState = null;
+    if (typeof undo === "function") undo();
+    else { st = C.normalize(JSON.parse(undo)); activeMine = ""; renderAll(); }
     $("#toast").classList.remove("show");
   });
 

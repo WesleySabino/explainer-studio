@@ -29,6 +29,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
       </summary>
       <div class="menu__list" role="menu">
+        <button type="button" role="menuitem" data-action="personal" data-i18n="personal"></button>
         <button type="button" role="menuitem" data-action="export" data-i18n="exportAnswers"></button>
         <button type="button" role="menuitem" data-action="import" data-i18n="importAnswers"></button>
         <button type="button" role="menuitem" data-action="reset" data-i18n="reset"></button>
@@ -73,8 +74,29 @@
 <button type="button" class="fab" id="fab" aria-controls="preview" aria-expanded="false">
   <span data-i18n="prompt"></span><b id="fabCount"></b>
 </button>
+<dialog class="dialog" id="personal" aria-labelledby="personalTitle">
+  <div class="dialog__head">
+    <h2 id="personalTitle" data-i18n="personal"></h2>
+    <button type="button" class="icon-btn" id="personalClose">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="dialog__body">
+    <section class="dialog__save" aria-labelledby="saveTitle">
+      <h3 id="saveTitle" data-i18n="saveCurrent"></h3>
+      <label class="field__label" for="pName" data-i18n="presetName"></label>
+      <input class="input" type="text" id="pName" maxlength="80" autocomplete="off">
+      <p class="field__label" id="lb-pGroups" data-i18n="includes"></p>
+      <div class="pills" role="group" aria-labelledby="lb-pGroups" id="pGroups"></div>
+      <button type="button" class="primary" id="pSave" data-i18n="save"></button>
+    </section>
+    <ul class="dialog__list" id="pList"></ul>
+    <button type="button" class="ghost" id="pImport" data-i18n="importPreset"></button>
+  </div>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="importFile" accept="application/json,.json" hidden>
+<input type="file" id="pImportFile" accept="application/json,.json" hidden>
 
 <script src="src/schema.js"></script>
 <script src="src/core.js"></script>

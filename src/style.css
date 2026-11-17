@@ -277,6 +277,28 @@ input:focus-visible + .track { outline: 2px solid var(--chalk); outline-offset: 
 }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 .toast button { border: 0; background: none; padding: 0; color: inherit; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
+/* Dialog: my starting points */
+.dialog {
+  width: min(34rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); padding: 0; overflow: auto; border-radius: 22px;
+  border: 1px solid var(--line-2); background: var(--bg-2); color: var(--ink); box-shadow: var(--shadow);
+  scrollbar-width: thin; scrollbar-color: var(--line-2) transparent;
+}
+.dialog::backdrop { background: rgba(0, 0, 0, .5); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.dialog[open] { animation: rise .4s var(--ease); }
+.dialog__head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.3rem; background: var(--bg-2); border-bottom: 1px solid var(--line); }
+.dialog__head h2 { flex: 1; margin: 0; font: 400 1.75rem/1.1 var(--serif); }
+.dialog__body { display: grid; gap: 1.3rem; padding: 1.3rem; }
+.dialog h3 { margin: 0; font-size: 1rem; font-weight: 650; overflow-wrap: anywhere; }
+.dialog__save { display: grid; gap: .55rem; }
+.dialog__save h3 { margin-bottom: .4rem; }
+.dialog__save .field__label { margin: .3rem 0 0; }
+.dialog__save .primary { justify-self: start; margin-top: .4rem; }
+.dialog__list { list-style: none; margin: 0; padding: 0; display: grid; gap: .8rem; }
+.dialog__list li { display: grid; gap: .75rem; padding: 1rem; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+.dialog__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.dialog__actions button { padding: .48rem .95rem; font-size: .85rem; }
+.dialog .ghost { justify-self: start; }
+.primary:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .noscript { position: relative; z-index: 2; max-width: 40rem; margin: 3rem auto; padding: 1rem 1.2rem; text-align: center; border: 1px solid var(--line-2); border-radius: 14px; }
 
 /* Responsive */

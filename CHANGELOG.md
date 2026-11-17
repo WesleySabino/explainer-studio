@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- Personal starting points: save branding, languages, accessibility and development answers under a name, apply all or some of those groups to any project while keeping its project-specific answers, and export or import them as files. They appear next to the built-in starting points.
+- CLI `--personal <file>` and `--groups <ids>` apply an exported starting point file.
 - English feature inventory and prioritized roadmap in `docs/FEATURES.md`, linked from both READMEs, with implemented capabilities checked and planned additions unchecked.
 
 ### Fixed
