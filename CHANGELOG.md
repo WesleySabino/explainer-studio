@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- English feature inventory and prioritized roadmap in `docs/FEATURES.md`, linked from both READMEs, with implemented capabilities checked and planned additions unchecked.
+
 ### Fixed
 
 - GitHub Pages deployment now uses current Node 24 actions and Ubuntu 24.04 runners, avoiding the Node 20 deprecation warning and Ubuntu runner migration notices after selecting GitHub Actions as the Pages source.

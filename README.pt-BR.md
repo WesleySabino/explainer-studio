@@ -23,6 +23,10 @@ O prompt já traz o que costuma dar errado quando um agente constrói esse tipo 
 - **Privado por padrão.** Roda inteiro no navegador. As respostas ficam no `localStorage`; nada é enviado.
 - **Sem dependências, sem build.** Abra o `index.html` e pronto, inclusive via `file://`.
 
+## Recursos e próximos passos
+
+Veja a [lista de recursos e próximos passos](docs/FEATURES.md) (em inglês) para consultar todas as funcionalidades implementadas e as melhorias planejadas em ordem de prioridade. Os itens marcados já estão disponíveis; os itens desmarcados estão planejados.
+
 ## Começando
 
 Abra o `index.html` no navegador. Só isso.

@@ -23,6 +23,10 @@ The prompt carries what usually goes wrong when an agent builds this kind of sit
 - **Private by design.** Runs entirely in your browser. Answers stay in `localStorage`; nothing is sent anywhere.
 - **No dependencies, no build.** Open `index.html` and it works, even from `file://`.
 
+## Features and roadmap
+
+See the [feature checklist and roadmap](docs/FEATURES.md) for the complete inventory of implemented features and the planned additions in priority order. Checked items are available today; unchecked items are planned.
+
 ## Quick start
 
 Open `index.html` in a browser. That's it.
